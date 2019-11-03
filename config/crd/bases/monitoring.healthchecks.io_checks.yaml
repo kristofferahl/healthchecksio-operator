@@ -1,0 +1,133 @@
+
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.2.2
+  creationTimestamp: null
+  name: checks.monitoring.healthchecks.io
+spec:
+  additionalPrinterColumns:
+  - JSONPath: .spec.schedule
+    name: Schedule
+    type: string
+  - JSONPath: .spec.timezone
+    name: Timezone
+    type: string
+  - JSONPath: .spec.gracePeriod
+    name: GracePeriod
+    type: integer
+  - JSONPath: .status.status
+    name: Status
+    type: string
+  - JSONPath: .status.pings
+    name: Pings
+    priority: 1
+    type: integer
+  - JSONPath: .status.lastPing
+    format: date-time
+    name: LastPing
+    priority: 1
+    type: string
+  - JSONPath: .status.lastUpdated
+    format: date-time
+    name: LastUpdated
+    priority: 1
+    type: string
+  group: monitoring.healthchecks.io
+  names:
+    kind: Check
+    listKind: CheckList
+    plural: checks
+    singular: check
+  scope: ""
+  subresources:
+    status: {}
+  validation:
+    openAPIV3Schema:
+      description: Check is the Schema for the checks API
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          description: CheckSpec defines the desired state of Check
+          properties:
+            channels:
+              description: A list of channels to assign to the check.
+              items:
+                type: string
+              minItems: 0
+              type: array
+            gracePeriod:
+              description: A number of seconds, the grace period for the check.
+              format: int32
+              minimum: 0
+              type: integer
+            schedule:
+              description: The schedule in Cron format
+              minLength: 0
+              type: string
+            tags:
+              description: A list of tags for the check.
+              items:
+                type: string
+              minItems: 0
+              type: array
+            timeout:
+              description: A number of seconds, the expected period of the check.
+              format: int32
+              minimum: 0
+              type: integer
+            timezone:
+              description: Server's timezone. This setting only has effect in combination
+                with the "schedule" property.
+              minLength: 0
+              type: string
+          type: object
+        status:
+          description: CheckStatus defines the observed state of Check
+          properties:
+            id:
+              description: The ID of the check
+              type: string
+            lastPing:
+              description: When was the last time the check was successfully pinged.
+              type: string
+            lastUpdated:
+              description: When was the last time the check was successfully updated.
+              format: date-time
+              type: string
+            pingURL:
+              description: The URL used for pinging the check
+              type: string
+            pings:
+              description: What number of times has the check been pinged.
+              format: int32
+              type: integer
+            status:
+              description: What was the status of the check.
+              type: string
+          type: object
+      type: object
+  version: v1alpha1
+  versions:
+  - name: v1alpha1
+    served: true
+    storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []

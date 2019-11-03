@@ -17,8 +17,11 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"os"
 
+	logr "github.com/go-logr/logr"
+	healthchecksio "github.com/kristofferahl/go-healthchecksio"
 	monitoringv1alpha1 "github.com/kristofferahl/healthchecksio-operator/api/v1alpha1"
 	"github.com/kristofferahl/healthchecksio-operator/controllers"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -32,6 +35,7 @@ import (
 var (
 	scheme   = runtime.NewScheme()
 	setupLog = ctrl.Log.WithName("setup")
+	apiKey   = os.Getenv("HEALTHCHECKSIO_API_KEY")
 )
 
 func init() {
@@ -64,10 +68,17 @@ func main() {
 		os.Exit(1)
 	}
 
+	hckioClient := healthchecksio.NewClient(apiKey)
+	hckioClient.Log = &logrLogger{
+		log: ctrl.Log.WithName("hckio-client"),
+	}
+
 	if err = (&controllers.CheckReconciler{
 		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("Check"),
 		Scheme: mgr.GetScheme(),
+		Log:    ctrl.Log.WithName("controllers").WithName("Check"),
+		Hckio:  hckioClient,
+		Clock:  controllers.NewClock(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Check")
 		os.Exit(1)
@@ -79,4 +90,20 @@ func main() {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
+}
+
+type logrLogger struct {
+	log logr.Logger
+}
+
+func (l *logrLogger) Debugf(format string, args ...interface{}) {
+	l.log.V(1).Info(fmt.Sprintf(format, args...))
+}
+
+func (l *logrLogger) Infof(format string, args ...interface{}) {
+	l.log.V(0).Info(fmt.Sprintf(format, args...))
+}
+
+func (l *logrLogger) Errorf(format string, args ...interface{}) {
+	l.log.Error(nil, fmt.Sprintf(format, args...))
 }
