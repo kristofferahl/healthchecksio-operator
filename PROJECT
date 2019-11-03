@@ -1,0 +1,3 @@
+version: "2"
+domain: healthchecks.io
+repo: github.com/kristofferahl/healthchecksio-operator
