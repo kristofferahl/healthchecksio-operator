@@ -103,6 +103,7 @@ spec:
               type: string
             lastPing:
               description: When was the last time the check was successfully pinged.
+              format: date-time
               type: string
             lastUpdated:
               description: When was the last time the check was successfully updated.

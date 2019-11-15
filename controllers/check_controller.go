@@ -211,11 +211,14 @@ func (r *CheckReconciler) updateCheckStatus(check *monitoringv1alpha1.Check, hea
 	}
 
 	pings := int32(healthcheck.Pings)
+	lp, _ := time.Parse(time.RFC3339, healthcheck.LastPing)
+	lastPing := metav1.NewTime(lp)
+
 	check.Status.ObservedGeneration = check.ObjectMeta.Generation
 	check.Status.ID = healthcheck.ID()
 	check.Status.PingURL = healthcheck.PingURL
 	check.Status.Status = healthcheck.Status
-	check.Status.LastPing = healthcheck.LastPing
+	check.Status.LastPing = &lastPing
 	check.Status.Pings = &pings
 
 	after, err := hashstructure.Hash(check.Status, nil)

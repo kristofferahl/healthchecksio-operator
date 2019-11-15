@@ -278,7 +278,7 @@ func TestCheckController_UpdateCheckStatusFromHealtcheck_Changed(t *testing.T) {
 		UpdateURL: "update/" + id,
 		PingURL:   "ping/" + id,
 		Status:    GenerateRandomString(5),
-		LastPing:  GenerateRandomString(20),
+		LastPing:  now.Format(time.RFC3339),
 		Pings:     pings,
 	}
 
@@ -291,7 +291,7 @@ func TestCheckController_UpdateCheckStatusFromHealtcheck_Changed(t *testing.T) {
 	r.t.Expect(check.Status.PingURL).To(Equal(res.PingURL))
 	r.t.Expect(check.Status.LastUpdated).To(Equal(&serverTime))
 	r.t.Expect(check.Status.Status).To(Equal(res.Status))
-	r.t.Expect(check.Status.LastPing).To(Equal(res.LastPing))
+	r.t.Expect(check.Status.LastPing.Format(time.RFC3339)).To(Equal(serverTime.Format(time.RFC3339)))
 	r.t.Expect(check.Status.Pings).To(Equal(&pings32))
 }
 
@@ -311,7 +311,7 @@ func TestCheckController_UpdateCheckStatusFromHealtcheck_Unchanged(t *testing.T)
 		UpdateURL: "update/" + id,
 		PingURL:   "ping/" + id,
 		Status:    GenerateRandomString(5),
-		LastPing:  GenerateRandomString(20),
+		LastPing:  now.Format(time.RFC3339),
 		Pings:     pings,
 	}
 
@@ -320,7 +320,7 @@ func TestCheckController_UpdateCheckStatusFromHealtcheck_Unchanged(t *testing.T)
 			ID:       id,
 			PingURL:  res.PingURL,
 			Status:   res.Status,
-			LastPing: res.LastPing,
+			LastPing: &serverTime,
 			Pings:    &pings32,
 		},
 	}
@@ -330,12 +330,6 @@ func TestCheckController_UpdateCheckStatusFromHealtcheck_Unchanged(t *testing.T)
 
 	// Assert
 	r.t.Expect(changed).To(BeFalse())
-	// r.t.Expect(check.Status.ID).To(Equal(id))
-	// r.t.Expect(check.Status.PingURL).To(Equal(res.PingURL))
-	// r.t.Expect(check.Status.LastUpdated).To(Equal(&serverTime))
-	// r.t.Expect(check.Status.Status).To(Equal(res.Status))
-	// r.t.Expect(check.Status.LastPing).To(Equal(res.LastPing))
-	// r.t.Expect(check.Status.Pings).To(Equal(&pings32))
 }
 
 func TestCheckController_CreateCheck(t *testing.T) {

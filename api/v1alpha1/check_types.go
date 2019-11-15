@@ -86,7 +86,7 @@ type CheckStatus struct {
 
 	// When was the last time the check was successfully pinged.
 	// +optional
-	LastPing string `json:"lastPing,omitempty"`
+	LastPing *metav1.Time `json:"lastPing,omitempty"`
 
 	// The URL used for pinging the check
 	// +optional
