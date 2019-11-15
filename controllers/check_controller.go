@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
+	"github.com/mitchellh/hashstructure"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -139,12 +140,15 @@ func (r *CheckReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	log.V(2).Info(fmt.Sprintf("healthcheck %s, %v", healthcheck.ID(), healthcheck))
 
 	// Update the status based on the response
-	r.updateCheckStatus(&check, *healthcheck)
-	if err := r.Status().Update(ctx, &check); err != nil {
-		log.Error(err, "unable to update Check status")
-		return ctrl.Result{}, err
+	if r.updateCheckStatus(&check, *healthcheck) {
+		if err := r.Status().Update(ctx, &check); err != nil {
+			log.Error(err, "unable to update Check status")
+			return ctrl.Result{}, err
+		}
+		log.V(1).Info("updated the Check status")
+	} else {
+		log.V(1).Info("skipped update of the Check status")
 	}
-	log.V(1).Info("updated the Check status")
 
 	// TODO: requeue configurable or not at all?
 	return ctrl.Result{RequeueAfter: 1 * time.Minute}, nil
@@ -198,14 +202,36 @@ func matchTargetChannels(check monitoringv1alpha1.Check, allChannels ...*healthc
 	return channels
 }
 
-func (r *CheckReconciler) updateCheckStatus(check *monitoringv1alpha1.Check, healthcheck healthchecksio.HealthcheckResponse) {
+func (r *CheckReconciler) updateCheckStatus(check *monitoringv1alpha1.Check, healthcheck healthchecksio.HealthcheckResponse) bool {
+	changed := false
+
+	before, err := hashstructure.Hash(check.Status, nil)
+	if err != nil {
+		changed = true
+	}
+
 	pings := int32(healthcheck.Pings)
+	check.Status.ObservedGeneration = check.ObjectMeta.Generation
 	check.Status.ID = healthcheck.ID()
 	check.Status.PingURL = healthcheck.PingURL
-	check.Status.LastUpdated = r.Clock.Now()
 	check.Status.Status = healthcheck.Status
 	check.Status.LastPing = healthcheck.LastPing
 	check.Status.Pings = &pings
+
+	after, err := hashstructure.Hash(check.Status, nil)
+	if err != nil {
+		changed = true
+	}
+
+	if changed == false {
+		changed = before != after
+	}
+
+	if changed {
+		check.Status.LastUpdated = r.Clock.Now()
+	}
+
+	return changed
 }
 
 // Delete any external resources associated with the check.

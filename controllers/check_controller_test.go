@@ -261,7 +261,7 @@ func TestCheckController_MatchChannelsToChannels(t *testing.T) {
 	}, channels...)).To(Equal([]string{"3"}))
 }
 
-func TestCheckController_UpdateCheckStatusFromHealtcheck(t *testing.T) {
+func TestCheckController_UpdateCheckStatusFromHealtcheck_Changed(t *testing.T) {
 	// Arrange
 	now := time.Now()
 	serverTime := metav1.NewTime(now)
@@ -283,15 +283,59 @@ func TestCheckController_UpdateCheckStatusFromHealtcheck(t *testing.T) {
 	}
 
 	// Act
-	r.Reconciler.updateCheckStatus(&check, *res)
+	changed := r.Reconciler.updateCheckStatus(&check, *res)
 
 	// Assert
+	r.t.Expect(changed).To(BeTrue())
 	r.t.Expect(check.Status.ID).To(Equal(id))
 	r.t.Expect(check.Status.PingURL).To(Equal(res.PingURL))
 	r.t.Expect(check.Status.LastUpdated).To(Equal(&serverTime))
 	r.t.Expect(check.Status.Status).To(Equal(res.Status))
 	r.t.Expect(check.Status.LastPing).To(Equal(res.LastPing))
 	r.t.Expect(check.Status.Pings).To(Equal(&pings32))
+}
+
+func TestCheckController_UpdateCheckStatusFromHealtcheck_Unchanged(t *testing.T) {
+	// Arrange
+	now := time.Now()
+	serverTime := metav1.NewTime(now)
+	pings := rand.Intn(100)
+	pings32 := int32(pings)
+
+	r := NewCheckReconcilerTest(t, WithReconcilerClock(func() *metav1.Time {
+		return &serverTime
+	}))
+
+	id := GenerateRandomString(20)
+	res := &healthchecksio.HealthcheckResponse{
+		UpdateURL: "update/" + id,
+		PingURL:   "ping/" + id,
+		Status:    GenerateRandomString(5),
+		LastPing:  GenerateRandomString(20),
+		Pings:     pings,
+	}
+
+	check := monitoringv1alpha1.Check{
+		Status: monitoringv1alpha1.CheckStatus{
+			ID:       id,
+			PingURL:  res.PingURL,
+			Status:   res.Status,
+			LastPing: res.LastPing,
+			Pings:    &pings32,
+		},
+	}
+
+	// Act
+	changed := r.Reconciler.updateCheckStatus(&check, *res)
+
+	// Assert
+	r.t.Expect(changed).To(BeFalse())
+	// r.t.Expect(check.Status.ID).To(Equal(id))
+	// r.t.Expect(check.Status.PingURL).To(Equal(res.PingURL))
+	// r.t.Expect(check.Status.LastUpdated).To(Equal(&serverTime))
+	// r.t.Expect(check.Status.Status).To(Equal(res.Status))
+	// r.t.Expect(check.Status.LastPing).To(Equal(res.LastPing))
+	// r.t.Expect(check.Status.Pings).To(Equal(&pings32))
 }
 
 func TestCheckController_CreateCheck(t *testing.T) {

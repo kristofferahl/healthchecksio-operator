@@ -6,6 +6,7 @@ require (
 	github.com/go-logr/logr v0.1.0
 	github.com/google/uuid v1.1.1 // indirect
 	github.com/kristofferahl/go-healthchecksio v1.1.1-0.20191110102359-6a12e8c5676a
+	github.com/mitchellh/hashstructure v1.0.0
 	github.com/onsi/ginkgo v1.6.0
 	github.com/onsi/gomega v1.5.0
 	golang.org/x/crypto v0.0.0-20190426145343-a29dc8fdc734 // indirect

@@ -91,6 +91,10 @@ type CheckStatus struct {
 	// The URL used for pinging the check
 	// +optional
 	PingURL string `json:"pingURL,omitempty"`
+
+	// The last seen generation of the resource
+	// +optional
+	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
 }
 
 // +kubebuilder:object:root=true

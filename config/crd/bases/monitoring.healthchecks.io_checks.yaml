@@ -108,6 +108,10 @@ spec:
               description: When was the last time the check was successfully updated.
               format: date-time
               type: string
+            observedGeneration:
+              description: The last seen generation of the resource
+              format: int64
+              type: integer
             pingURL:
               description: The URL used for pinging the check
               type: string
