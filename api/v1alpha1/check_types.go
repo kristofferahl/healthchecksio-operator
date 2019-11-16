@@ -99,10 +99,11 @@ type CheckStatus struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:name="Timeout",type=integer,JSONPath=`.spec.timeout`
 // +kubebuilder:printcolumn:name="Schedule",type=string,JSONPath=`.spec.schedule`
-// +kubebuilder:printcolumn:name="Timezone",priority=0,type=string,JSONPath=`.spec.timezone`
+// +kubebuilder:printcolumn:name="Timezone",type=string,JSONPath=`.spec.timezone`
 // +kubebuilder:printcolumn:name="GracePeriod",type=integer,JSONPath=`.spec.gracePeriod`
-// +kubebuilder:printcolumn:name="Status",priority=0,type=string,JSONPath=`.status.status`
+// +kubebuilder:printcolumn:name="Status",priority=1,type=string,JSONPath=`.status.status`
 // +kubebuilder:printcolumn:name="Pings",priority=1,type=integer,JSONPath=`.status.pings`
 // +kubebuilder:printcolumn:name="LastPing",priority=1,type=string,format="date-time",JSONPath=`.status.lastPing`
 // +kubebuilder:printcolumn:name="LastUpdated",priority=1,type=string,format="date-time",JSONPath=`.status.lastUpdated`

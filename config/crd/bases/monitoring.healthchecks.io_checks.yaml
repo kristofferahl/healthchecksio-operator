@@ -9,6 +9,9 @@ metadata:
   name: checks.monitoring.healthchecks.io
 spec:
   additionalPrinterColumns:
+  - JSONPath: .spec.timeout
+    name: Timeout
+    type: integer
   - JSONPath: .spec.schedule
     name: Schedule
     type: string
@@ -20,6 +23,7 @@ spec:
     type: integer
   - JSONPath: .status.status
     name: Status
+    priority: 1
     type: string
   - JSONPath: .status.pings
     name: Pings
