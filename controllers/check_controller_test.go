@@ -401,7 +401,7 @@ func TestCheckController_CreateCheck(t *testing.T) {
 
 	// Make sure reconcile had not errors and that we requeue after n time
 	ctx.t.Expect(err).ToNot(HaveOccurred(), "expected no errors during reconcile")
-	ctx.t.Expect(res).To(Equal(reconcile.Result{RequeueAfter: 1 * time.Minute}))
+	ctx.t.Expect(res).To(Equal(reconcile.Result{RequeueAfter: 5 * time.Minute}))
 
 	// Make sure check can be found after reconcile
 	check := &monitoringv1alpha1.Check{}
@@ -542,6 +542,7 @@ func NewCheckReconcilerWithT(t *testing.T, o *TestOptions) *CheckReconciler {
 		Clock: Clock{
 			Source: o.ReconcilerClock,
 		},
+		ReconcileInterval: 5 * time.Minute,
 	}
 }
 

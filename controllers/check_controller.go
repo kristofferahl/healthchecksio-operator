@@ -40,10 +40,11 @@ const (
 // CheckReconciler reconciles a Check object
 type CheckReconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
-	Log    logr.Logger
-	Hckio  *healthchecksio.Client
-	Clock  Clock
+	Scheme            *runtime.Scheme
+	Log               logr.Logger
+	Hckio             *healthchecksio.Client
+	Clock             Clock
+	ReconcileInterval time.Duration
 }
 
 // Clock enables mocking of time
@@ -151,7 +152,7 @@ func (r *CheckReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	}
 
 	// TODO: requeue configurable or not at all?
-	return ctrl.Result{RequeueAfter: 1 * time.Minute}, nil
+	return ctrl.Result{RequeueAfter: r.ReconcileInterval}, nil
 }
 
 func convertToHealthcheck(check monitoringv1alpha1.Check, channels ...string) healthchecksio.Healthcheck {
