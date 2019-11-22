@@ -19,6 +19,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"time"
 
 	logr "github.com/go-logr/logr"
 	healthchecksio "github.com/kristofferahl/go-healthchecksio"
@@ -48,9 +49,11 @@ func init() {
 func main() {
 	var metricsAddr string
 	var enableLeaderElection bool
+	var reconcileInterval time.Duration
+
 	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
-	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
-		"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.")
+	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false, "Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.")
+	flag.DurationVar(&reconcileInterval, "reconcile-interval", 1*time.Minute, "The interval for the reconcile loop")
 	flag.Parse()
 
 	ctrl.SetLogger(zap.New(func(o *zap.Options) {
@@ -74,11 +77,12 @@ func main() {
 	}
 
 	if err = (&controllers.CheckReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-		Log:    ctrl.Log.WithName("controllers").WithName("Check"),
-		Hckio:  hckioClient,
-		Clock:  controllers.NewClock(),
+		Client:            mgr.GetClient(),
+		Scheme:            mgr.GetScheme(),
+		Log:               ctrl.Log.WithName("controllers").WithName("Check"),
+		Hckio:             hckioClient,
+		Clock:             controllers.NewClock(),
+		ReconcileInterval: reconcileInterval,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Check")
 		os.Exit(1)
