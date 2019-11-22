@@ -32,10 +32,16 @@ spec:
 
 ### Configuration
 
-| Description                          | Environment variable                | Type   | Required |
-|--------------------------------------|-------------------------------------|--------|----------|
-| The healthchecks.io API Key          | HEALTHCHECKSIO_API_KEY              | string | true     |
-| Run the operator in development mode | HEALTHCHECKSIO_OPERATOR_DEVELOPMENT | bool   | true     |
+| Flag                   | Environment variable            | Type     | Required | Description                                                                                                           |
+|------------------------|---------------------------------|----------|----------|-----------------------------------------------------------------------------------------------------------------------|
+| -                      | HEALTHCHECKSIO_API_KEY          | string   | true     | The healthchecks.io API Key.                                                                                          |
+| metrics-addr           | OPERATOR_METRICS_ADDR           | string   | false    | The address the metric endpoint binds to.                                                                             |
+| enable-leader-election | OPERATOR_ENABLE_LEADER_ELECTION | bool     | false    | Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager. |
+| development            | OPERATOR_DEVELOPMENT            | bool     | false    | Run the operator in development mode.                                                                                 |
+| log-level              | OPERATOR_LOG_LEVEL              | string   | false    | The log level used by the operator.                                                                                   |
+| name-prefix            | OPERATOR_NAME_PREFIX            | string   | false    | Prefix used to create unique resources across clusters.                                                               |
+| reconcile-interval     | OPERATOR_RECONCILE_INTERVAL     | duration | false    | The interval for the reconcile loop.                                                                                  |
+
 
 ## Development
 
@@ -48,7 +54,7 @@ spec:
 ### Getting started
 ```bash
 export HEALTHCHECKSIO_API_KEY='<API_KEY>'
-export HEALTHCHECKSIO_OPERATOR_DEVELOPMENT='true'
+export OPERATOR_DEVELOPMENT='true'
 make install
 make run
 ```

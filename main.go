@@ -18,6 +18,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"strconv"
 	"time"
@@ -36,10 +37,8 @@ import (
 )
 
 var (
-	scheme      = runtime.NewScheme()
-	setupLog    = ctrl.Log.WithName("setup")
-	apiKey      = os.Getenv("HEALTHCHECKSIO_API_KEY")
-	development = os.Getenv("HEALTHCHECKSIO_OPERATOR_DEVELOPMENT")
+	scheme   = runtime.NewScheme()
+	setupLog = ctrl.Log.WithName("setup")
 )
 
 func init() {
@@ -50,22 +49,32 @@ func init() {
 }
 
 func main() {
+	var apiKey string
 	var metricsAddr string
 	var enableLeaderElection bool
-	var reconcileInterval time.Duration
+	var development bool
 	var logLevel string
+	var namePrefix string
+	var reconcileInterval time.Duration
 
 	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false, "Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.")
+	flag.BoolVar(&development, "development", false, "Run the operator in development mode.")
+	flag.StringVar(&logLevel, "log-level", "info", "The log level used by the operator.")
+	flag.StringVar(&namePrefix, "name-prefix", "", "Prefix used to create unique resources across clusters.")
 	flag.DurationVar(&reconcileInterval, "reconcile-interval", 1*time.Minute, "The interval for the reconcile loop")
-	flag.StringVar(&logLevel, "log-level", "info", "The log level to use.")
 	flag.Parse()
 
+	apiKey = envOrDefaultString("HEALTHCHECKSIO_API_KEY", "")
+	metricsAddr = envOrDefaultString("OPERATOR_METRICS_ADDR", metricsAddr)
+	enableLeaderElection = envOrDefaultBool("OPERATOR_ENABLE_LEADER_ELECTION", enableLeaderElection)
+	development = envOrDefaultBool("OPERATOR_DEVELOPMENT", development)
+	logLevel = envOrDefaultString("OPERATOR_LOG_LEVEL", logLevel)
+	namePrefix = envOrDefaultString("OPERATOR_NAME_PREFIX", namePrefix)
+	reconcileInterval = envOrDefaultDuration("OPERATOR_RECONCILE_INTERVAL", reconcileInterval)
+
 	ctrl.SetLogger(logrzap.New(func(o *logrzap.Options) {
-		dev, err := strconv.ParseBool(development)
-		if err == nil {
-			o.Development = dev
-		}
+		o.Development = development
 
 		if o.Development == false {
 			lev := zap.NewAtomicLevel()
@@ -73,6 +82,16 @@ func main() {
 			o.Level = &lev
 		}
 	}))
+
+	setupLog.Info(
+		"configuration",
+		"metricsAddr", metricsAddr,
+		"enableLeaderElection", enableLeaderElection,
+		"development", development,
+		"logLevel", logLevel,
+		"namePrefix", namePrefix,
+		"reconcileInterval", reconcileInterval,
+	)
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:             scheme,
@@ -97,6 +116,7 @@ func main() {
 		Hckio:             hckioClient,
 		Clock:             controllers.NewClock(),
 		ReconcileInterval: reconcileInterval,
+		NamePrefix:        namePrefix,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Check")
 		os.Exit(1)
@@ -108,6 +128,32 @@ func main() {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
+}
+
+func envOrDefaultString(key, defaultValue string) string {
+	v := os.Getenv(key)
+	if v != "" {
+		return v
+	}
+	return defaultValue
+}
+
+func envOrDefaultBool(key string, defaultValue bool) bool {
+	v := envOrDefaultString(key, strconv.FormatBool(defaultValue))
+	pv, err := strconv.ParseBool(v)
+	if err != nil {
+		log.Panicf("failed parsing boolean from environment variable %s", key)
+	}
+	return pv
+}
+
+func envOrDefaultDuration(key string, defaultValue time.Duration) time.Duration {
+	v := envOrDefaultString(key, defaultValue.String())
+	pv, err := time.ParseDuration(v)
+	if err != nil {
+		log.Panicf("failed parsing duration from environment variable %s", key)
+	}
+	return pv
 }
 
 type logrLogger struct {
