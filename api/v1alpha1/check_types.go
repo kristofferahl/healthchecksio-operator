@@ -27,39 +27,42 @@ type CheckSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// +kubebuilder:validation:MinLength=0
-
 	// The schedule in Cron format
+	// +optional
+	// +kubebuilder:validation:MinLength=1
 	Schedule string `json:"schedule,omitempty"`
-
-	// +kubebuilder:validation:MinLength=0
 
 	// Server's timezone. This setting only has effect in combination with the "schedule" property.
 	// +optional
+	// +kubebuilder:validation:MinLength=1
 	Timezone string `json:"timezone,omitempty"`
-
-	// +kubebuilder:validation:Minimum=0
 
 	// A number of seconds, the expected period of the check.
 	// +optional
+	// +kubebuilder:validation:Minimum=60
+	// +kubebuilder:validation:Maximum=2592000
 	Timeout *int32 `json:"timeout,omitempty"`
-
-	// +kubebuilder:validation:Minimum=0
 
 	// A number of seconds, the grace period for the check.
 	// +optional
+	// +kubebuilder:validation:Minimum=60
+	// +kubebuilder:validation:Maximum=2592000
 	GracePeriod *int32 `json:"gracePeriod,omitempty"`
 
 	// +kubebuilder:validation:MinItems=0
 
 	// A list of tags for the check.
 	// +optional
+	// +kubebuilder:validation:MinItems=1
+	// +kubebuilder:validation:MaxItems=100
 	Tags []string `json:"tags,omitempty"`
 
 	// +kubebuilder:validation:MinItems=0
 
 	// A list of channels to assign to the check.
 	// +optional
+	// +kubebuilder:validation:MinItems=1
+	// +kubebuilder:validation:MaxItems=100
 	Channels []string `json:"channels,omitempty"`
 }
 
