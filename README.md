@@ -30,6 +30,13 @@ spec:
     - prod
 ```
 
+### Configuration
+
+| Description                          | Environment variable                | Type   | Required |
+|--------------------------------------|-------------------------------------|--------|----------|
+| The healthchecks.io API Key          | HEALTHCHECKSIO_API_KEY              | string | true     |
+| Run the operator in development mode | HEALTHCHECKSIO_OPERATOR_DEVELOPMENT | bool   | true     |
+
 ## Development
 
 ### Pre-requisites
@@ -41,6 +48,7 @@ spec:
 ### Getting started
 ```bash
 export HEALTHCHECKSIO_API_KEY='<API_KEY>'
+export HEALTHCHECKSIO_OPERATOR_DEVELOPMENT='true'
 make install
 make run
 ```

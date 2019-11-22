@@ -19,6 +19,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strconv"
 	"time"
 
 	logr "github.com/go-logr/logr"
@@ -34,9 +35,10 @@ import (
 )
 
 var (
-	scheme   = runtime.NewScheme()
-	setupLog = ctrl.Log.WithName("setup")
-	apiKey   = os.Getenv("HEALTHCHECKSIO_API_KEY")
+	scheme      = runtime.NewScheme()
+	setupLog    = ctrl.Log.WithName("setup")
+	apiKey      = os.Getenv("HEALTHCHECKSIO_API_KEY")
+	development = os.Getenv("HEALTHCHECKSIO_OPERATOR_DEVELOPMENT")
 )
 
 func init() {
@@ -57,7 +59,10 @@ func main() {
 	flag.Parse()
 
 	ctrl.SetLogger(zap.New(func(o *zap.Options) {
-		o.Development = true
+		dev, err := strconv.ParseBool(development)
+		if err == nil {
+			o.Development = dev
+		}
 	}))
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
