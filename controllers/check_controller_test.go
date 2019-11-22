@@ -152,13 +152,14 @@ func TestCheckController_DeleteExternalResources_Error(t *testing.T) {
 
 func TestCheckController_ConvertCheckToHealthcheck(t *testing.T) {
 	g := NewGomegaWithT(t)
+	r := &CheckReconciler{}
 
-	g.Expect(convertToHealthcheck(monitoringv1alpha1.Check{})).
+	g.Expect(r.convertToHealthcheck(monitoringv1alpha1.Check{})).
 		To(Equal(healthchecksio.Healthcheck{Name: "/", Unique: []string{"name"}}))
 
 	name := GenerateRandomString(5)
 	namespace := GenerateRandomString(10)
-	g.Expect(convertToHealthcheck(monitoringv1alpha1.Check{
+	g.Expect(r.convertToHealthcheck(monitoringv1alpha1.Check{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
@@ -166,14 +167,14 @@ func TestCheckController_ConvertCheckToHealthcheck(t *testing.T) {
 	})).To(Equal(healthchecksio.Healthcheck{Name: namespace + "/" + name, Unique: []string{"name"}}))
 
 	schedule := GenerateRandomString(5)
-	g.Expect(convertToHealthcheck(monitoringv1alpha1.Check{
+	g.Expect(r.convertToHealthcheck(monitoringv1alpha1.Check{
 		Spec: monitoringv1alpha1.CheckSpec{
 			Schedule: schedule,
 		},
 	})).To(Equal(healthchecksio.Healthcheck{Name: "/", Schedule: schedule, Unique: []string{"name"}}))
 
 	timezone := GenerateRandomString(3)
-	g.Expect(convertToHealthcheck(monitoringv1alpha1.Check{
+	g.Expect(r.convertToHealthcheck(monitoringv1alpha1.Check{
 		Spec: monitoringv1alpha1.CheckSpec{
 			Timezone: timezone,
 		},
@@ -181,7 +182,7 @@ func TestCheckController_ConvertCheckToHealthcheck(t *testing.T) {
 
 	timeout := rand.Intn(1000)
 	timeout32 := int32(timeout)
-	g.Expect(convertToHealthcheck(monitoringv1alpha1.Check{
+	g.Expect(r.convertToHealthcheck(monitoringv1alpha1.Check{
 		Spec: monitoringv1alpha1.CheckSpec{
 			Timeout: &timeout32,
 		},
@@ -189,25 +190,43 @@ func TestCheckController_ConvertCheckToHealthcheck(t *testing.T) {
 
 	grace := rand.Intn(1000)
 	grace32 := int32(grace)
-	g.Expect(convertToHealthcheck(monitoringv1alpha1.Check{
+	g.Expect(r.convertToHealthcheck(monitoringv1alpha1.Check{
 		Spec: monitoringv1alpha1.CheckSpec{
 			GracePeriod: &grace32,
 		},
 	})).To(Equal(healthchecksio.Healthcheck{Name: "/", Grace: grace, Unique: []string{"name"}}))
 
 	tags := []string{"k8s", "ftw"}
-	g.Expect(convertToHealthcheck(monitoringv1alpha1.Check{
+	g.Expect(r.convertToHealthcheck(monitoringv1alpha1.Check{
 		Spec: monitoringv1alpha1.CheckSpec{
 			Tags: tags,
 		},
 	})).To(Equal(healthchecksio.Healthcheck{Name: "/", Tags: "k8s ftw", Unique: []string{"name"}}))
 
 	channels := []string{"email-1", "sms-2"}
-	g.Expect(convertToHealthcheck(monitoringv1alpha1.Check{
+	g.Expect(r.convertToHealthcheck(monitoringv1alpha1.Check{
 		Spec: monitoringv1alpha1.CheckSpec{
 			Channels: channels,
 		},
 	}, channels...)).To(Equal(healthchecksio.Healthcheck{Name: "/", Channels: "email-1,sms-2", Unique: []string{"name"}}))
+}
+
+func TestCheckController_ConvertCheckToHealthcheck_NamePrefix(t *testing.T) {
+	np := GenerateRandomString(5)
+	g := NewGomegaWithT(t)
+	r := &CheckReconciler{NamePrefix: np}
+
+	g.Expect(r.convertToHealthcheck(monitoringv1alpha1.Check{})).
+		To(Equal(healthchecksio.Healthcheck{Name: np + "//", Unique: []string{"name"}}))
+
+	name := GenerateRandomString(5)
+	namespace := GenerateRandomString(10)
+	g.Expect(r.convertToHealthcheck(monitoringv1alpha1.Check{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+	})).To(Equal(healthchecksio.Healthcheck{Name: np + "/" + namespace + "/" + name, Unique: []string{"name"}}))
 }
 
 func TestCheckController_MatchChannelsToChannels(t *testing.T) {

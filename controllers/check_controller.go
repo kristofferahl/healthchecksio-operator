@@ -45,6 +45,7 @@ type CheckReconciler struct {
 	Hckio             *healthchecksio.Client
 	Clock             Clock
 	ReconcileInterval time.Duration
+	NamePrefix        string
 }
 
 // Clock enables mocking of time
@@ -132,7 +133,7 @@ func (r *CheckReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		log.V(1).Info("fetched channels from healthchecksio")
 	}
 
-	healthcheck, err := r.Hckio.Create(convertToHealthcheck(check, channels...))
+	healthcheck, err := r.Hckio.Create(r.convertToHealthcheck(check, channels...))
 	if err != nil {
 		log.Error(err, "healthchecksio returned an error when creating/updating healthcheck")
 		return ctrl.Result{}, err
@@ -155,7 +156,12 @@ func (r *CheckReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	return ctrl.Result{RequeueAfter: r.ReconcileInterval}, nil
 }
 
-func convertToHealthcheck(check monitoringv1alpha1.Check, channels ...string) healthchecksio.Healthcheck {
+func (r *CheckReconciler) convertToHealthcheck(check monitoringv1alpha1.Check, channels ...string) healthchecksio.Healthcheck {
+	name := fmt.Sprintf("%s/%s", check.Namespace, check.Name)
+	if r.NamePrefix != "" {
+		name = fmt.Sprintf("%s/%s", r.NamePrefix, name)
+	}
+
 	timeout := 0
 	if check.Spec.Timeout != nil {
 		timeout = int(*check.Spec.Timeout)
@@ -167,7 +173,7 @@ func convertToHealthcheck(check monitoringv1alpha1.Check, channels ...string) he
 	}
 
 	return healthchecksio.Healthcheck{
-		Name:     fmt.Sprintf("%s/%s", check.Namespace, check.Name),
+		Name:     name,
 		Schedule: check.Spec.Schedule,
 		Timezone: check.Spec.Timezone,
 		Timeout:  timeout,
