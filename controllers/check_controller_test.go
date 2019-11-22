@@ -24,17 +24,14 @@ import (
 
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
-func TestCheckController_RemoveString(t *testing.T) {
+func TestCheckController_ParseTimestamp(t *testing.T) {
 	// Arrange
 	g := NewGomegaWithT(t)
-	input := []string{"foo", "bar", "baz"}
-	expected := []string{"foo", "baz"}
 
-	// Act
-	actual := removeString(input, "bar")
-
-	// Assert
-	g.Expect(actual).To(Equal(expected))
+	// Act & assert
+	g.Expect(parseTimestamp("")).To(BeNil())
+	g.Expect(parseTimestamp("invalid RFC3339 string")).To(BeNil())
+	g.Expect(*parseTimestamp("2017-01-04T13:24:39.903464+00:00")).ToNot(BeNil())
 }
 
 func TestCheckController_ContainsString(t *testing.T) {
@@ -47,6 +44,19 @@ func TestCheckController_ContainsString(t *testing.T) {
 	g.Expect(containsString(input, "bar")).To(BeTrue())
 	g.Expect(containsString(input, "baz")).To(BeTrue())
 	g.Expect(containsString(input, "bin")).To(BeFalse())
+}
+
+func TestCheckController_RemoveString(t *testing.T) {
+	// Arrange
+	g := NewGomegaWithT(t)
+	input := []string{"foo", "bar", "baz"}
+	expected := []string{"foo", "baz"}
+
+	// Act
+	actual := removeString(input, "bar")
+
+	// Assert
+	g.Expect(actual).To(Equal(expected))
 }
 
 func TestCheckController_IsTargetChannel(t *testing.T) {

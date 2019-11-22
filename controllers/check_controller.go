@@ -211,15 +211,13 @@ func (r *CheckReconciler) updateCheckStatus(check *monitoringv1alpha1.Check, hea
 	}
 
 	pings := int32(healthcheck.Pings)
-	lp, _ := time.Parse(time.RFC3339, healthcheck.LastPing)
-	lastPing := metav1.NewTime(lp)
 
 	check.Status.ObservedGeneration = check.ObjectMeta.Generation
 	check.Status.ID = healthcheck.ID()
 	check.Status.PingURL = healthcheck.PingURL
 	check.Status.Status = healthcheck.Status
-	check.Status.LastPing = &lastPing
 	check.Status.Pings = &pings
+	check.Status.LastPing = parseTimestamp(healthcheck.LastPing)
 
 	after, err := hashstructure.Hash(check.Status, nil)
 	if err != nil {
@@ -249,6 +247,17 @@ func (r *CheckReconciler) deleteExternalResources(check *monitoringv1alpha1.Chec
 		}
 		return err
 	}
+	return nil
+}
+
+func parseTimestamp(ts string) *metav1.Time {
+	var lastPing metav1.Time
+	lp, err := time.Parse(time.RFC3339, ts)
+	if err == nil {
+		lastPing = metav1.NewTime(lp)
+		return &lastPing
+	}
+
 	return nil
 }
 
