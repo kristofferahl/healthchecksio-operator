@@ -26,11 +26,12 @@ import (
 	healthchecksio "github.com/kristofferahl/go-healthchecksio"
 	monitoringv1alpha1 "github.com/kristofferahl/healthchecksio-operator/api/v1alpha1"
 	"github.com/kristofferahl/healthchecksio-operator/controllers"
+	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	logrzap "sigs.k8s.io/controller-runtime/pkg/log/zap"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -52,16 +53,24 @@ func main() {
 	var metricsAddr string
 	var enableLeaderElection bool
 	var reconcileInterval time.Duration
+	var logLevel string
 
 	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false, "Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.")
 	flag.DurationVar(&reconcileInterval, "reconcile-interval", 1*time.Minute, "The interval for the reconcile loop")
+	flag.StringVar(&logLevel, "log-level", "info", "The log level to use.")
 	flag.Parse()
 
-	ctrl.SetLogger(zap.New(func(o *zap.Options) {
+	ctrl.SetLogger(logrzap.New(func(o *logrzap.Options) {
 		dev, err := strconv.ParseBool(development)
 		if err == nil {
 			o.Development = dev
+		}
+
+		if o.Development == false {
+			lev := zap.NewAtomicLevel()
+			(&lev).UnmarshalText([]byte(logLevel))
+			o.Level = &lev
 		}
 	}))
 
